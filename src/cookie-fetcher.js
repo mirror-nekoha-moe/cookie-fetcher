@@ -1,27 +1,39 @@
-// login.js
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+const fs = require('fs');
+const path = require('path');
 
-(async () => {
-    const browser = await puppeteer.launch({ headless: true });
+const outDir = "./cookies";
+
+async function refreshCookies() {
+    fs.mkdirSync(outDir, { recursive: true });
+
+    puppeteer.use(StealthPlugin());
+
+    const browser = await puppeteer.launch({
+        headless: true,
+        userDataDir: './puppeteer_profile',
+    });
     const page = await browser.newPage();
 
-    // Set user-agent like osu! client
-    await page.setUserAgent('osu!/2025.10.26');
+    try {
+        // Open osu! home page
+        await page.goto('https://osu.ppy.sh', { waitUntil: 'networkidle2' });
 
-    // Go to osu! login page
-    await page.goto('https://osu.ppy.sh/home/login');
+        // Get all cookies for the current page
+        const cookies = await page.cookies();
+        const cookieHeader = cookies.map(c => `${c.name}=${encodeURIComponent(c.value)}`).join('; ');
+        
+        // Save files
+        fs.writeFileSync(path.join(outDir, 'cookies_header.txt'), cookieHeader);
+        fs.writeFileSync(path.join(outDir, 'cookies.json'), JSON.stringify(cookies, null, 2));
 
-    // Fill form and submit
-    await page.type('#username', 'YOUR_USERNAME');
-    await page.type('#password', 'YOUR_PASSWORD');
-    await page.click('button[type=submit]');
+        await browser.close();
+    } catch (err) {
+        console.error('Error refreshing cookies:', err);
+        await browser.close();
+    }
+}
 
-    // Wait for navigation
-    await page.waitForNavigation({ waitUntil: 'networkidle2' });
-
-    // Get cookies
-    const cookies = await page.cookies();
-    console.log(JSON.stringify(cookies));
-
-    await browser.close();
-})();
+refreshCookies();
+setInterval(refreshCookies, 24 * 60 * 60 * 1000); // 24h
