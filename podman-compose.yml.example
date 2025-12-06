@@ -1,0 +1,16 @@
+services:
+  # Cookie Fetcher Service
+  # Modify variables to your likeness
+  cookie-fetcher:
+    build:
+      context: ./cookie-fetcher
+      dockerfile: Dockerfile
+    container_name: cookie-fetcher
+    restart: always
+    volumes:
+      - osu-cookies:/app/cookies:Z
+      - ./cookie-fetcher/puppeteer_profile:/app/puppeteer_profile:Z
+    networks:
+      - mirror-network
+    security_opt:
+      - label=disable
