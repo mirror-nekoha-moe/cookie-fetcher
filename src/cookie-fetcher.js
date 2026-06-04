@@ -27,7 +27,7 @@ async function refreshCookies() {
 
         // Get all cookies for the current page
         const cookies = await page.cookies();
-        const cookieHeader = cookies.map(c => `${c.name}=${encodeURIComponent(c.value)}`).join('; ');
+        const cookieHeader = cookies.map(c => `${c.name}=${c.value}`).join('; ');
         
         console.log('[' + new Date().toISOString() + '] Got ' + cookies.length + ' cookies, saving...');
         // Save files
